@@ -1,3 +1,8 @@
+# REIVILIBRE'S PERSONAL FORK
+
+This fork is being developed for stability and compatibility with Postgres.
+
+
 # TaskBoard
 
 [![Build Status](https://travis-ci.org/kiswa/TaskBoard.svg)](https://travis-ci.org/kiswa/TaskBoard) [![Codacy Badge](https://api.codacy.com/project/badge/Grade/77952f4ac9b44e9fbebe7758442d356d)](https://www.codacy.com/app/kiswa-com/TaskBoard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=kiswa/TaskBoard&amp;utm_campaign=Badge_Grade) [![Join the chat at https://gitter.im/kiswa/TaskBoard](https://badges.gitter.im/kiswa/TaskBoard.svg)](https://gitter.im/kiswa/TaskBoard?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge) [![Join the discussion at https://reddit.com/r/TaskBoard](https://cdn.rawgit.com/kiswa/TaskBoard/09444718053f7405636ab2205ad0f12413df7a20/reddit.svg)](https://reddit.com/r/TaskBoard)
@@ -42,54 +47,79 @@ The directory you create for TaskBoard must have `AllowOverride` set so the
 
 You also have to have `mod_rewrite` installed and enabled.
 
-#### NGINX
+#### Nginx
 
 
 Example Nginx configuration:
 
 ```
 server {
-        listen 80;
-        listen [::]:80;
-        listen 443 ssl;
+  server_name ...;
 
-	root /var/www/taskboard/;
-        index index.php index.html index.htm;
+  listen 443 ssl http2;
+  listen [::]:443 ssl http2;
 
-	client_max_body_size 100M;
-	client_body_buffer_size 128k;
+  client_max_body_size 100M;
+  client_body_buffer_size 128k;
 
-  server_name taskboard.your.url;
+  # Note: You should disable gzip for SSL traffic.
+  # See: https://bugs.debian.org/773332
+  #
+  # Read up on ssl_ciphers to ensure a secure configuration.
+  # See: https://bugs.debian.org/765782
 
+  ssl_certificate /etc/nginx/tls/....pem;
+  ssl_certificate_key /etc/nginx/tls/....key;
+  include snippets/olivier-good-tls.conf;
+
+  add_header X-Frame-Options SAME-ORIGIN;
+  add_header X-Content-Type-Options nosniff;
+
+  root /var/www/taskboard/taskboard_{{ taskboard.version }};
+  index index.php index.html;
+  autoindex off;
 
   location / {
-    if (!-e $request_filename){
-        rewrite ^(.*)$ /index.html break;
-     }
+    try_files $uri $uri/ /index.html;
   }
-
 
   location /api {
-      if (!-e $request_filename) {
-          rewrite ^(.*)$ /api/index.php last; break;
-      }
+    try_files $uri $uri/ @rewriteApi;
   }
 
-    location /api/taskboard.db {
-        rewrite ^(.*)$ /api/index.php last; break;
-    }
-	
-	location ~ \.php$ {
-        fastcgi_split_path_info ^(.+\.php)(/.+)$;
-        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
-                include snippets/fastcgi-php.conf;
-                fastcgi_pass unix:/var/run/php/php7.2-fpm.sock;
-        }
+  location @rewriteApi {
+    rewrite ^(.*)$ /api/index.php last;
+    break;
+  }
 
-        location ~ /\.ht {
-                deny all;
-        }
+  location ~ [^/]\.php(/|$) {
+    fastcgi_split_path_info ^(.+?\.php)(/.*)$;
+    if (!-f $document_root$fastcgi_script_name) {
+      return 404;
+    }
+
+    fastcgi_param HTTP_PROXY "";
+    fastcgi_pass unix:/var/run/php/php-fpm.sock;
+    fastcgi_index index.php;
+    include snippets/fastcgi-php.conf;
+  }
+
+  location ~ /\.ht {
+    # deny htaccess
+    deny all;
+  }
 }
+
+server {
+    server_name ...;
+
+    listen 80;
+    listen [::]:80;
+
+    # permanent redirect preserving method (POSTs not converted to GETs)
+    return 301 https://$server_name$request_uri;
+}
+
 ```
 
 You might need to replace `php7.2-fpm.sock` with your PHP version.
