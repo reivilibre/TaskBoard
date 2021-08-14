@@ -122,7 +122,7 @@ server {
 
 ```
 
-You might need to replace `php7.2-fpm.sock` with your PHP version.
+You might need to replace `php-fpm.sock` with a different path for your PHP version.
 
 
 #### IIS
@@ -208,6 +208,12 @@ Developing on TaskBoard is pretty simple too.
 3. If you don't have it already, install the Angular CLI globally with `npm i -g @angular/cli`
 4. Run `npm i` to install dependencies (this also installs the API dependencies)
 5. Run `npm run watch` for the build to automatically run after any change
+
+
+### Building
+
+Run `npm run build` to build. The `dist` directory will be created with the build.
+
 
 ### Unit Tests
 
