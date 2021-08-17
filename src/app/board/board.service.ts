@@ -9,6 +9,7 @@ import bash from 'node_modules/highlight.js/lib/languages/bash.js';
 import css from 'node_modules/highlight.js/lib/languages/css.js';
 import csharp from 'node_modules/highlight.js/lib/languages/csharp.js';
 import php from 'node_modules/highlight.js/lib/languages/php.js';
+import python from 'node_modules/highlight.js/lib/languages/python.js';
 
 import { BehaviorSubject, Observable, of } from 'rxjs';
 import { map, catchError } from 'rxjs/operators';
@@ -42,6 +43,7 @@ export class BoardService extends ApiService {
     hljs.registerLanguage('css', css);
     hljs.registerLanguage('csharp', csharp);
     hljs.registerLanguage('php', php);
+    hljs.registerLanguage('python', python);
   }
 
   showTask(id: number) {
