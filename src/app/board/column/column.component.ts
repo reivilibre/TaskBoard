@@ -287,20 +287,35 @@ export class ColumnDisplayComponent implements OnInit, OnDestroy {
   }
 
   drop(event: CdkDragDrop<string[]>) {
+    const colId = event.container.id.substr(3) as unknown as number - 1;
+    const column = this.activeBoard.columns[colId];
+
+    const prevColId = event.previousContainer.id.substr(3) as unknown as number - 1;
+    const prevColumn = this.activeBoard.columns[prevColId];
+
     if (event.previousContainer === event.container) {
       this.moveItemInArray(event.container.data,
         event.previousIndex, event.currentIndex);
+      // console.log("same", event.previousIndex, event.currentIndex, this.activeBoard);
     } else {
       this.transferArrayItem(event.previousContainer.data,
         event.container.data, event.previousIndex, event.currentIndex);
+      // console.log("diff", event.previousIndex, event.currentIndex, this.activeBoard, event.container);
     }
 
-    const colId = event.container.id.substr(3) as unknown as number - 1;
-    const column = this.activeBoard.columns[colId];
 
     column.tasks.forEach((task, index) => {
       task.position = index + 1;
     });
+
+    if (prevColId != colId) {
+      prevColumn.tasks.forEach((task, index) => {
+        task.position = index + 1;
+      });
+    }
+
+    // console.log("updating", column.id, column.tasks.map(e => e.id));
+
 
     this.boardService.updateColumn(column).subscribe((response: ApiResponse) => {
       if (response.status !== 'success') {

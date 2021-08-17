@@ -89,6 +89,25 @@ export class BoardDisplayComponent implements OnInit, OnDestroy {
       boardService.showTask(params.taskId);
     });
     this.subs.push(sub);
+
+    this.subscribeEnableActiveBoard();
+  }
+
+  subscribeEnableActiveBoard() {
+    // We must do this otherwise the board can become out of sync when we update it and receive a new version of it.
+    // (Without this, we can't move more than one task on the board per page load!)
+    this.boardService.activeBoardChanged.subscribe(board => {
+      //console.log("enabling active board");
+      if (board) {
+        this.activeBoard = board;
+        this.pageName = board.name;
+        this.title.setTitle('TaskBoard - ' + this.activeBoard.name);
+      } else {
+        this.activeBoard = new Board();
+        this.pageName = 'No board...';
+        this.title.setTitle('TaskBoard');
+      }
+    });
   }
 
   ngOnInit() {
@@ -201,11 +220,7 @@ export class BoardDisplayComponent implements OnInit, OnDestroy {
     this.userFilter = null;
     this.categoryFilter = null;
 
-    this.activeBoard = board;
-    this.pageName = board.name;
-
     this.boardService.updateActiveBoard(board);
-    this.title.setTitle('TaskBoard - ' + this.activeBoard.name);
 
     this.loading = false;
   }
