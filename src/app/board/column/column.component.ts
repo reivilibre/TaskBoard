@@ -260,6 +260,8 @@ export class ColumnDisplayComponent implements OnInit, OnDestroy {
       return;
     }
 
+    newTask.position = this.columnData.tasks.length + 1;
+
     this.boardService.addTask(newTask)
       .subscribe((response: ApiResponse) => {
         response.alerts.forEach(note => this.notes.add(note));
